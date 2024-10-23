@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Jonathan Hall">
+    <link rel="stylesheet" href="main.css">
+    <script src="questionBank.js"></script>
+    <script src="differentiator.js"></script>
+    <script src="utilities.js"></script>
+    <script src="manipulatives.js"></script>
+    <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <meta name="description" content="Interactive algebra tiles to aid the use of manipulatives in the classroom.">
+    <link rel="icon" type="image/png" href="https://mathsbot.com/media/favicon192.png" sizes="192x192">
+    <link rel="apple-touch-icon" href="https://mathsbot.com/media/favicon192.png" sizes="192x192">
+    <title>Algebra Tiles</title>
+    <style>
+        div.leftMenu {
+            text-align: center;
+            margin-top: 1.5em;
+        }
+
+        div.rightMenu {
+            text-align: center;
+            margin-top: 1.6em;
+        }
+
+        div.rightMenu div {
+            margin: 0.2em;
+        }
+
+        div.middleMenu div {
+            margin: 0.2em;
+        }
+
+        input.split {
+            min-width: 2em;
+        }
+
+        input.var {
+            width: 2em;
+            text-align: center;
+        }
+
+        #topicSelect {
+            width: 12em;
+        }
+
+        #questionText {
+            display: none;
+        }
+
+        #exampleText {
+            font-size: 2em;
+        }
+
+        #exampleText div {
+            margin: 0.3em;
+        }
+
+        #tileValue2 {
+            display: none;
+        }
+
+        #cpd {
+            overflow: auto;
+        }
+
+        .menuItem {
+            float: left;
+            width: 18%;
+            margin: 1%;
+        }
+
+        .menuItem h3 {
+            margin: 0.2em;
+            font-size: 1em;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JYHV7BKFZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-JYHV7BKFZS');
+    </script>
+    <div class="iconMenu">
+        <img title="Help" class="icon"
+            onclick="window.open('/manual?id=7', '_blank', 'toolbar=0, width=500, height=500');" src="icons/help.svg">
+        <input title="Background colour" class="icon" title="Background colour"
+            oninput="canvasColour = this.value; drawScreen();" type="color" value="#ffffff">
+        <img title="Zoom out" class="icon" onclick="zoom(-1)" src="icons/zoomOut.svg">
+        <img title="Zoom in" class="icon" onclick="zoom(1)" src="icons/zoomIn.svg">
+        <img title="Toggle Fullscreen" class="icon" onclick="toggleFS()" src="icons/fullscreen.svg">
+    </div>
+    <section id="controls" class="controls border">
+        <div class="middleMenu">
+            <h1>Algebra Tiles</h1>
+            <div>
+                <input type="button" title="Tidy" value="Tidy" onclick="init()">
+                <input type="button" title="(Delete)" value="Delete" onclick="deleteTile()">
+                <input type="button" title="(F)lip" value="Flip" onclick="flip()">
+                <input type="button" title="(Z)ero Pair" value="Zero Pair" onclick="zeroAll()">
+                <input type="button" title="(R)otate" value="Rotate" onclick="rotate()">
+                <input type="button" class="split" title="Split Tiles Horizontally" value="&#151;"
+                    onclick="splitTile(2, &quot;h&quot;)">
+                <input type="button" class="split" title="Split Tiles Vertically" value="|"
+                    onclick="splitTile(2, &quot;v&quot;)">
+                <input type="button" title="Axis" value="Axis"
+                    onclick="addDivider(&quot;horizontal&quot;); addDivider(&quot;vertical&quot;)">
+            </div>
+            <div>
+                <select onchange="createExample()" id="topicSelect">
+                    <option>Choose a topic...</option>
+                    <option value="-1">Blank</option>
+                    <option value="98">1. Directed number: Addition with negatives</option>
+                    <option value="101">2. Directed number: Division with negatives</option>
+                    <option value="100">3. Directed number: Multiplication with negatives</option>
+                    <option value="61">4. Directed number: Negative temperatures</option>
+                    <option value="138">5. Directed number: Rewriting as a sum</option>
+                    <option value="99">6. Directed number: Subtraction with negatives</option>
+                    <option value="107">7. Equations: If ... then ...</option>
+                    <option value="44">8. Equations: Mixed</option>
+                    <option value="121">9. Equations: Solving linear simultaneous</option>
+                    <option value="29">10. Equations: Solving one-step equations</option>
+                    <option value="38">11. Equations: Solving two-step equations</option>
+                    <option value="48">12. Equations: Solving with brackets both sides</option>
+                    <option value="46">13. Equations: Solving with brackets one side</option>
+                    <option value="43">14. Equations: Solving with unknowns on both sides</option>
+                    <option value="135">15. Expressions: Algebraic division in one variable</option>
+                    <option value="136">16. Expressions: Algebraic division in two variables</option>
+                    <option value="14">17. Expressions: Collecting like terms</option>
+                    <option value="84">18. Expressions: Completing the square</option>
+                    <option value="87">19. Expressions: Expanding binomials to monic quadratics</option>
+                    <option value="134">20. Expressions: Expanding binomials to non-monic quadratics</option>
+                    <option value="66">21. Expressions: Expanding brackets and simplifying </option>
+                    <option value="65">22. Expressions: Expanding single brackets</option>
+                    <option value="113">23. Expressions: Factorising into single brackets</option>
+                    <option value="86">24. Expressions: Factorising monic quadratics</option>
+                    <option value="133">25. Expressions: Factorising non-monic quadratics</option>
+                    <option value="64">26. Expressions: Multiplying terms</option>
+                </select>
+                <label title="Difficulty">Difficulty: <span style="width: 1em; display: inline-block;"
+                        id="difficultyLabel">0</span> </label>
+                <input title="Difficulty" oninput="difficultyLabel.innerHTML = this.value" id="levelSelect" type="range"
+                    value="0" min="0" max="10" step="1">
+            </div>
+            <div>
+                <button onclick="createExample()">New Example</button>
+                <button id="solutionButton" onclick="toggleAnswer()">Show Solution</button>
+            </div>
+        </div>
+        <div class="leftMenu">
+            <div class="copyButtons">
+                <div>
+                    <img id="upA" title="Copy Up" class="icon" onclick="moveCopy(0, -1)" src="icons/arrowUp.svg">
+                </div>
+                <div>
+                    <img id="leftA" title="Copy Left" class="icon" onclick="moveCopy(-1, 0)" src="icons/arrowLeft.svg">
+                    <img class="icon" title="Switch to Move Mode" id="copyMoveSelect" onclick="toggleCopyMove()"
+                        src="icons/copy.svg">
+                    <img id="rightA" title="Copy Right" class="icon" onclick="moveCopy(1, 0)"
+                        src="icons/arrowRight.svg">
+                </div>
+                <div>
+                    <img id="downA" title="Copy Down" class="icon" onclick="moveCopy(0, 1)" src="icons/arrowDown.svg">
+                </div>
+            </div>
+            <script>
+                function toggleCopyMove() {
+                    moving = !moving;
+                    copyMoveSelect.src = moving ? "/media/icons/move.svg" : "/media/icons/copy.svg";
+                    copyMoveSelect.title = moving ? "Switch to Copy Mode" : "Switch to Move Mode";
+                    var adj = moving ? "Move" : "Copy";
+                    upA.title = adj + " Up";
+                    leftA.title = adj + " Left";
+                    rightA.title = adj + " Right";
+                    downA.title = adj + " Down";
+                }
+            </script>
+        </div>
+        <div class="rightMenu">
+            <div>
+                <label for="variableSelect">Variables:</label>
+                <select onchange="makeShapes()" id="variableSelect">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+                <input class="var" id="tileValue" maxlength="3" oninput="drawScreen()" class="tileValue" value="x">
+                <input class="var" id="tileValue2" maxlength="3" oninput="drawScreen()" class="tileValue" value="y">
+            </div>
+            <div>
+                <input oninput="changeColours(this.value)" onchange="changeColours(this.value)" id="tileColor"
+                    type="color" value="#ffffff">
+                <label for="labelButton">Labels:</label>
+                <input type="checkbox" checked id="labelButton" onclick="toggleLabels()">
+            </div>
+        </div>
+    </section>
+    <section>
+        <div id="content" class="questionBox border">
+            <div contenteditable="true" id="exampleText"></div>
+            <canvas id="tileCanvas">
+            </canvas>
+        </div>
+        <div id="cpd" class="questionBox border">
+            <h2>Algebra Tiles CPD</h2>
+            <p>Please login with the <a style="color: #000" href="https://www.patreon.com/studymaths">membership</a>
+                code to access the (brand new and growing!) library of CPD videos.</p>
+            <form style="margin: 1%;" id="secret" action="https://mathsbot.com/scripts/adFree.php" method="post"><input
+                    title="Ad-Free code for Patreons" placeholder="Enter code here" name="password" type="password"
+                    onclick="this.select()" /><button type="submit">Go</button></form>
+        </div>
+    </section>
+    <footer id="footer">
+        <div>
+            <small>
+                <a href="https://mathsbot.com/">Home</a> |
+                <a href="https://mathsbot.com/membership">Membership</a> |
+                <a href="https://mathsbot.com/privacy">Privacy</a> |
+                <a href="https://mathsbot.com/about">Contact</a> |
+                &copy; 2013 - 2024 </small>
+        </div>
+    </footer>
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'8d7304de8cc7d2ab',t:'MTcyOTcwMDA1NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+</body>
+<script type="text/javascript" charset="utf-8">
+    var question;
+    var shapeTypes;
+    var shapeSize;
+    var multiplier = 4.5;
+    var fontSize;
+    var shapes;
+    var snap = shapeSize / 2;
+    var showingLabels = true;
+    var showingColours = true;
+    var showingText = false;
+    var currentTile = 0;
+    var dragging;
+    var selecting;
+    var drag;
+    var mouseX, mouseY;
+    var touchX, touchY;
+    var mouseE;
+    var moving = false;
+    var theCanvas;
+    var context;
+    var showingDividers = true;
+    var twoVariables = false;
+    var canvasColour = "#ffffff";
+    var elem = document.documentElement;
+    function toggleFS() {
+        if (!document.isFullScreen && !document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+            elem.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    }
+    window.addEventListener("keydown", function (e) {
+        // space and arrow keys
+        if ([38, 40].indexOf(e.keyCode) > -1) {
+            e.preventDefault();
+        }
+    }, false);
+    document.addEventListener("keydown", function (event) {
+        if (document.activeElement !== document.getElementById("tileValue") && document.activeElement !== document.getElementById("tileValue2")) {
+            switch (event.key) {
+                case "Delete":
+                case "Backspace":
+                    deleteTile();
+                    break;
+                case "ArrowLeft":
+                    moveCopy(-1, 0);
+                    break;
+                case "ArrowRight":
+                    moveCopy(1, 0);
+                    break;
+                case "ArrowUp":
+                    moveCopy(0, -1);
+                    break;
+                case "ArrowDown":
+                    moveCopy(0, 1);
+                    break;
+                case "F":
+                    flip();
+                    break;
+                case "f":
+                    flip();
+                    break;
+                case "R":
+                    rotate();
+                    break;
+                case "r":
+                    rotate();
+                    break;
+                case "Z":
+                    zeroAll();
+                    break;
+                case "z":
+                    zeroAll();
+                    break;
+                case "S":
+                    shadeAll();
+                    break;
+                case "s":
+                    shadeAll();
+                    break;
+            }
+        }
+    });
+    function setUp() {
+        theCanvas = document.getElementById("tileCanvas");
+        context = theCanvas.getContext("2d");
+        cWidth = 0.96 * window.innerWidth;
+        cHeight = 0.98 * window.innerHeight;
+        context.canvas.width = cWidth;
+        context.canvas.height = cHeight;
+        scale = Math.floor(Math.min(cWidth, cHeight) / 20);
+        shapeSize = scale;
+        snap = scale / 4;
+        theCanvas.addEventListener("mousemove", highlightObject, false);
+        theCanvas.addEventListener("mousedown", downListener, false);
+        theCanvas.addEventListener('touchstart', downListener, false);
+        init();
+    }
+    function init() {
+        shapeTypes = 8;
+        snap = shapeSize / 4;
+        if (variableSelect.value > 1) {
+            twoVariables = true;
+            tileValue2.style.display = "inline-block";
+        } else {
+            twoVariables = false;
+            tileValue2.style.display = "none";
+        }
+        shapes = [];
+        currentTile = 0;
+        dragging = false;
+        makeShapes();
+        getEPPData();
+    }
+    function makeShapes() {
+        //var colour = new Array("DarkSlateBlue", "Green", "Gold", "Crimson", "orange", "violet", "cyan");
+        var colour = new Array("#1E90FF", "#3CB371", "#ffd700", "#DC143C", "#ee82ee", "#9932CC", "#00ffff");
+        var perType = 8;
+        var short = shapeSize;
+        var long = shapeSize * 4.5;
+        var gap = shapeSize / 4;
+        fontSize = shapeSize * 0.85;
+        for (var i = 0; i < shapeTypes; i++) {
+            for (var j = 0; j < perType; j++) {
+                switch (i) {
+                    case 0:
+                        var tempShape = { x: 0, y: 0, length: long, height: long, color: colour[0], layer: shapes.length, type: 0, power: 2, value: 1 };
+                        break;
+                    case 1:
+                        var tempShape = { x: 0, y: long + gap, length: long, height: short, color: colour[1], layer: shapes.length, type: 1, power: 1, value: 1 };
+                        break;
+                    case 2:
+                        var tempShape = { x: long + gap, y: 0, length: short, height: long, color: colour[1], layer: shapes.length, type: 2, power: 1, value: 1 };
+                        break;
+                    case 3:
+                        var tempShape = { x: long + gap, y: long + gap, length: short, height: short, color: colour[2], layer: shapes.length, type: 3, power: 0, value: 1 };
+                        break;
+                    case 4:
+                        var tempShape = { x: 0, y: long + gap * 2 + short, length: long, height: short, color: colour[3], layer: shapes.length, type: 1, power: 1, value: -1 };
+                        break;
+                    case 5:
+                        var tempShape = { x: long + gap, y: long + gap * 2 + short, length: short, height: short, color: colour[3], layer: shapes.length, type: 3, power: 0, value: -1 };
+                        break;
+                }
+                tempShape.moved = false;
+                tempShape.selected = false;
+                tempShape.shaded = false;
+                shapes.push(tempShape);
+            }
+        }
+        if (variableSelect.value > 1) {
+            var initY = long + shapeSize * 2 + 3 * gap;
+            var long = shapeSize * 3.25;
+            shapeTypes += 4;
+            for (var i = 0; i < shapeTypes; i++) {
+                for (var j = 0; j < perType; j++) {
+                    switch (i) {
+                        case 0:
+                            var tempShape = { x: 0, y: initY, length: long, height: long, color: colour[4], layer: shapes.length, type: 4, power: 5, value: 1 };
+                            break;
+                        case 1:
+                            var tempShape = { x: 0, y: initY + long + gap, length: long, height: short, color: colour[5], layer: shapes.length, type: 5, power: 4, value: 1 };
+                            break;
+                        case 2:
+                            var tempShape = { x: long + gap, y: initY, length: short, height: long, color: colour[5], layer: shapes.length, type: 6, power: 4, value: 1 };
+                            break;
+                        case 3:
+                            var tempShape = { x: long + gap, y: initY + long + gap, length: short, height: short, color: colour[2], layer: shapes.length, type: 3, power: 0, value: 1 };
+                            break;
+                        case 8:
+                            var tempShape = { x: 0, y: initY + long + gap + short + gap, length: long, height: shapeSize * 4.5, color: colour[6], layer: shapes.length, type: 7, power: 3, value: 1 };
+                            break;
+                    }
+                    tempShape.moved = false;
+                    tempShape.selected = false;
+                    tempShape.shaded = false;
+                    shapes.push(tempShape);
+                }
+            }
+        }
+        drawScreen();
+    }
+    function splitTile(parts, type) {
+        var total = shapes.length;
+        for (var i = 0; i < total; i++) {
+            if (shapes[i].type !== 9 && shapes[i].selected) {
+                if (type === "h") {
+                    shapes[i].height /= parts;
+                    shapes[i].value /= parts;
+                    var xShift = 0 * shapes[i].length;
+                    var yShift = 1 * shapes[i].height;
+                } else {
+                    shapes[i].length /= parts;
+                    shapes[i].value /= parts;
+                    var xShift = 1 * shapes[i].length;
+                    var yShift = 0 * shapes[i].height;
+                }
+                var tempShape = {
+                    x: shapes[i].x + xShift, y: shapes[i].y + yShift,
+                    length: shapes[i].length, height: shapes[i].height,
+                    color: shapes[i].color, layer: shapes.length,
+                    type: shapes[i].type, power: shapes[i].power, value: shapes[i].value,
+                    moved: shapes[i].moved, selected: shapes[i].selected, shaded: shapes[i].shaded
+                };
+                shapes.push(tempShape);
+                shapes[i].selected = false;
+            }
+        }
+        drawScreen();
+    }
+    function deleteTile() {
+        for (var i = 0; i < shapes.length; i++) {
+            if (shapes[i].selected) {
+                shapes.splice(i, 1);
+                i = 0;
+            }
+        }
+        currentTile = shapes.length - 1;
+        drawScreen();
+    }
+    function moveTiles(x, y) {
+        var total = shapes.length;
+        for (var i = 0; i < total; i++) {
+            if (shapes[i].selected) {
+                shapes[i].x += x * snap;
+                shapes[i].y += y * snap;
+            }
+        }
+        drawScreen();
+    }
+    function addTile(x, y) {
+        var total = shapes.length;
+        for (var i = 0; i < total; i++) {
+            if (shapes[i].selected) {
+                var xShift = x * shapes[i].length;
+                var yShift = y * shapes[i].height;
+                var tempShape = {
+                    x: shapes[i].x + xShift, y: shapes[i].y + yShift,
+                    length: shapes[i].length, height: shapes[i].height,
+                    color: shapes[i].color, layer: shapes.length,
+                    type: shapes[i].type, power: shapes[i].power, value: shapes[i].value,
+                    moved: shapes[i].moved, selected: shapes[i].selected, shaded: shapes[i].shaded
+                };
+                shapes.push(tempShape);
+                shapes[i].selected = false;
+            }
+            currentTile = shapes.length - 1;
+        }
+        drawScreen();
+    }
+    function checkZeroPairs() {
+        for (var j = 0; j < shapes.length; j++) {
+            for (var i = 0; i < shapes.length; i++) {
+                if ((shapes[j].selected || shapes[i].selected) && i !== j) {
+                    if (Math.abs(shapes[j].x - shapes[i].x) < shapeSize / 2) {
+                        if (Math.abs(shapes[j].y - shapes[i].y) < shapeSize / 2) {
+                            if (shapes[j].power === shapes[i].power) {
+                                if (shapes[j].value === -shapes[i].value && shapes[i].value !== 0) {
+                                    shapes[i].x = -9999;
+                                    shapes[j].x = -9999;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        drawScreen();
+    }
+    function zeroAll() {
+        for (var i = 0; i < shapes.length; i++) {
+            if (shapes[i].selected) {
+                for (var j = 0; j < shapes.length; j++) {
+                    if (shapes[j].selected && i !== j) {
+                        if (shapes[i].power === shapes[j].power) {
+                            if (shapes[i].value === -shapes[j].value && shapes[i].value !== 0) {
+                                shapes[i].x = -9999;
+                                shapes[j].x = -9999;
+                                shapes[i].selected = shapes[j].selected = false;
+                                j = shapes.length;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        drawScreen();
+    }
+    function addDivider(type) {
+        var maxHeight = context.canvas.height;
+        var maxWidth = context.canvas.width;
+        if (type === "vertical") {
+            var shapeLength = shapeSize / 2;
+            var shapeHeight = context.canvas.height * 0.9;
+            var x = maxWidth / 2 - shapeLength / 2;
+            var y = context.canvas.height / 2 - shapeHeight / 2;
+        } else if (type === "horizontal") {
+            var shapeHeight = shapeSize / 2;
+            var shapeLength = context.canvas.width * 0.8;
+            var x = context.canvas.width / 2 - shapeLength / 2;
+            var y = maxHeight / 2 - shapeHeight / 2;
+        }
+        x = Math.round(x / snap) * snap;
+        y = Math.round(y / snap) * snap;
+        var tempShape = { x: x, y: y, length: shapeLength, height: shapeHeight, color: "#000000", layer: shapes.length, type: 9 };
+        shapes.push(tempShape);
+        drawScreen();
+    }
+    function flip(all) {
+        for (var i = 0; i < shapes.length; i++) {
+            if (shapes[i].moved) {
+                if (shapes[i].selected || all) {
+                    if (shapes[i].type !== 9 && shapes[i].value !== 0) {
+                        if (shapes[i].color !== "#DC143C" && shapes[i].color !== "black") {
+                            shapes[i].color = "#DC143C";
+                        } else {
+                            switch (shapes[i].type) {
+                                case 0:
+                                    shapes[i].color = "#1E90FF";
+                                    break;
+                                case 1:
+                                    shapes[i].color = "#3CB371";
+                                    break;
+                                case 2:
+                                    shapes[i].color = "#3CB371";
+                                    break;
+                                case 3:
+                                    shapes[i].color = "#FFD700";
+                                    break;
+                                case 4:
+                                    shapes[i].color = "#ee82ee";
+                                    break;
+                                case 5:
+                                    shapes[i].color = "#9932CC";
+                                    break;
+                                case 6:
+                                    shapes[i].color = "#9932CC";
+                                    break;
+                                case 7:
+                                    shapes[i].color = "#00ffff";
+                                    break;
+                                case 8:
+                                    shapes[i].color = "cyan";
+                                    break;
+                            }
+                        }
+                        shapes[i].value = -shapes[i].value;
+                    }
+                }
+            }
+        }
+        drawScreen();
+    }
+    function changeColours(colour) {
+        for (var i = 0; i < shapes.length; i++) {
+            if (shapes[i].selected) {
+                shapes[i].color = colour;
+            }
+        }
+        drawScreen();
+    }
+    function shadeAll() {
+        for (var i = 0; i < shapes.length; i++) {
+            if (shapes[i].selected) {
+                shapes[i].shaded = !shapes[i].shaded;
+            }
+        }
+        drawScreen();
+    }
+    function rotate() {
+        for (var i = 0; i < shapes.length; i++) {
+            if (shapes[i].selected) {
+                var temp = shapes[i].length;
+                shapes[i].length = shapes[i].height;
+                shapes[i].height = temp;
+                shapes[i].x = Math.round(shapes[i].x / snap) * snap;
+                shapes[i].y = Math.round(shapes[i].y / snap) * snap;
+            }
+        }
+        drawScreen();
+    }
+    function downListener(e) {
+        tileValue.blur();
+        tileValue2.blur();
+        exampleText.blur();
+        dragging = false;
+        var i;
+        var hitShapes = [];
+        var topShape = 0;
+        var currentLayer = 0;
+        mouseE = e.button === 0 ? true : false;
+        getMousePos(e);
+        getTouchPos(e);
+        for (i = 0; i < shapes.length; i++) {
+            if ((hitTest(shapes[i], mouseX, mouseY) && mouseE) || hitTest(shapes[i], touchX, touchY)) {
+                hitShapes.push(i);
+                dragging = true;
+            }
+        }
+        for (i = 0; i < hitShapes.length; i++) {
+            if (shapes[hitShapes[i]].layer > currentLayer) {
+                topShape = hitShapes[i];
+                currentLayer = shapes[hitShapes[i]].layer;
+            }
+        }
+        if (dragging) {
+            changeLayers(topShape);
+            currentTile = topShape;
+            window.addEventListener("mousemove", mouseMoveListener, false);
+            window.addEventListener("touchmove", touchMoveListener, false);
+            drawScreen();
+
+            for (var i = 0; i < shapes.length; i++) {
+                if (i !== currentTile) {
+                    shapes[i].selected = false;
+                }
+            }
+            shapes[currentTile].selected = true;
+
+        } else {
+            selecting = true;
+            window.addEventListener("mousemove", selectmove, false);
+            window.addEventListener("touchmove", selectmove, false);
+            drag = new DragSelect();
+        }
+        theCanvas.removeEventListener("mousedown", downListener, false);
+        theCanvas.removeEventListener("touchstart", downListener, false);
+        window.addEventListener("mouseup", upListener, false);
+        window.addEventListener("touchend", upListener, false);
+        e.preventDefault();
+    }
+    function changeLayers(i) {
+        var max = 0;
+        for (var j = 0; j < shapes.length; j++) {
+            if (max < shapes[j].layer && i !== j) {
+                max = shapes[j].layer;
+            }
+        }
+        shapes[i].layer = max + 1;
+    }
+    function DragSelect() {
+        if (mouseE) {
+            this.initX = mouseX;
+            this.initY = mouseY;
+            this.endX = mouseX;
+            this.endY = mouseY;
+        } else {
+            this.initX = touchX;
+            this.initY = touchY;
+            this.endX = touchX;
+            this.endY = touchY;
+        }
+        this.display = function () {
+            if (mouseE) {
+                this.endX = mouseX;
+                this.endY = mouseY;
+            } else {
+                this.endX = touchX;
+                this.endY = touchY;
+            }
+            context.beginPath();
+            context.lineWidth = 1;
+            context.strokeStyle = "black";
+            context.setLineDash([5, 3]);
+            context.rect(this.initX, this.initY, this.endX - this.initX, this.endY - this.initY);
+            context.stroke();
+            context.setLineDash([]);
+        };
+        this.select = function () {
+            if (this.initX > this.endX) {
+                var temp = this.initX;
+                this.initX = this.endX;
+                this.endX = temp;
+            }
+            if (this.initY > this.endY) {
+                var temp = this.initY;
+                this.initY = this.endY;
+                this.endY = temp;
+            }
+            for (var i = 0; i < shapes.length; i++) {
+                shapes[i].selected = false;
+                if (shapes[i].x > this.initX && shapes[i].x < this.endX) {
+                    if (shapes[i].y > this.initY && shapes[i].y < this.endY) {
+                        shapes[i].selected = true;
+                    }
+                }
+            }
+        };
+    }
+    function upListener(e) {
+        theCanvas.addEventListener("mousedown", downListener, false);
+        theCanvas.addEventListener("touchstart", downListener, false);
+        window.removeEventListener("mouseup", upListener, false);
+        window.removeEventListener("touchend", upListener, false);
+        if (selecting) {
+            drag.select();
+        }
+        dragging = false;
+        selecting = false;
+        window.removeEventListener("mousemove", mouseMoveListener, false);
+        window.removeEventListener("touchmove", touchMoveListener, false);
+        shapes[currentTile].moved = true;
+        checkZeroPairs();
+        drawScreen();
+    }
+    function getMousePos(e) {
+        if (!e) {
+            var e = event;
+        }
+        if (e.offsetX) {
+            mouseX = e.offsetX;
+            mouseY = e.offsetY;
+        } else if (e.layerX) {
+            mouseX = e.layerX;
+            mouseY = e.layerY;
+        }
+    }
+    function getTouchPos(e) {
+        if (!e)
+            var e = event;
+        if (e.touches) {
+            if (e.touches.length === 1) { // Only deal with one finger
+                var touch = e.touches[0]; // Get the information for finger #1
+                touchX = touch.pageX - touch.target.offsetLeft;
+                touchY = touch.pageY - touch.target.offsetTop;
+            }
+        }
+    }
+    function selectmove(e) {
+        getMousePos(e);
+        getTouchPos(e);
+        drawScreen();
+    }
+    function mouseMoveListener(e) {
+        getMousePos(e);
+        shapes[currentTile].x = mouseX - shapes[currentTile].length / 2;
+        shapes[currentTile].y = mouseY - shapes[currentTile].height / 2;
+        shapes[currentTile].x = Math.round(shapes[currentTile].x / snap) * snap;
+        shapes[currentTile].y = Math.round(shapes[currentTile].y / snap) * snap;
+        drawScreen();
+    }
+    function touchMoveListener(e) {
+        getTouchPos(e);
+        shapes[currentTile].x = touchX - shapes[currentTile].length / 2;
+        shapes[currentTile].y = touchY - shapes[currentTile].height / 2;
+        shapes[currentTile].x = Math.round(shapes[currentTile].x / snap) * snap;
+        shapes[currentTile].y = Math.round(shapes[currentTile].y / snap) * snap;
+        drawScreen();
+    }
+    function hitTest(shape, mx, my) {
+        var hit = false;
+        if (mx > shape.x && mx < shape.x + shape.length && my > shape.y && my < shape.y + shape.height) {
+            hit = true;
+        }
+        return hit;
+    }
+    function highlightObject(e) {
+        var x = e.offsetX;
+        var y = e.offsetY;
+        for (var i = 0; i < shapes.length; i++) {
+            if (hitTest(shapes[i], x, y)) {
+                document.getElementById("tileCanvas").style.cursor = "pointer";
+                break;
+            } else {
+                document.getElementById("tileCanvas").style.cursor = "auto";
+            }
+        }
+        drawScreen();
+    }
+
+    function drawShapes() {
+        context.beginPath();
+        context.setLineDash([0]);
+        var totalShapes = 0;
+        var currentLayer = 0;
+        do {
+            for (var i = 0; i < shapes.length; i++) {
+                context.strokeStyle = "black";
+                context.lineWidth = 1;
+                if (shapes[i].layer === currentLayer) {
+                    if (shapes[i].selected && shapes[i].type !== 9) {
+                        context.strokeStyle = "#959";
+                        context.lineWidth = 3;
+                    }
+                    totalShapes++;
+                    context.fillStyle = shapes[i].color;
+                    if (shapes[i].type !== 9) {
+                        context.beginPath();
+                        context.rect(shapes[i].x, shapes[i].y, shapes[i].length, shapes[i].height);
+                        context.fill();
+                        context.stroke();
+                        context.closePath();
+                    }
+                    if (showingLabels && Math.abs(shapes[i].value) === 1) {
+                        var base = tileValue.value;
+                        var base2 = tileValue2.value;
+                        context.fillStyle = "black";
+                        context.font = "italic bold " + fontSize + "px Times New Roman";
+                        var text = "";
+                        if (shapes[i].value < 0) {
+                            text += "-";
+                        }
+                        switch (shapes[i].type) {
+                            case 0:
+                                text += base + "\u00B2";
+                                break;
+                            case 1:
+                                text += base;
+                                break;
+                            case 2:
+                                text += base;
+                                break;
+                            case 3:
+                                text += "1";
+                                break;
+                            case 4:
+                                text += base2 + "\u00B2";
+                                break;
+                            case 5:
+                                text += base2;
+                                break;
+                            case 6:
+                                text += base2;
+                                break;
+                            case 7:
+                                text += base + base2;
+                                break;
+                            case 8:
+                                text += base + base2;
+                                break;
+                        }
+                        context.fillText(text, shapes[i].x + shapes[i].length / 2 - context.measureText(text).width / 2, shapes[i].y + shapes[i].height / 2 + fontSize / 3.5);
+                    }
+                }
+            }
+            currentLayer++;
+        } while (totalShapes < shapes.length);
+        for (var i = 0; i < shapes.length; i++) {
+            if (shapes[i].type === 9) {
+                context.strokeStyle = "black";
+                context.lineWidth = 1;
+                context.fillStyle = "black";
+                context.beginPath();
+                var width = 1;
+                if (shapes[i].length < shapes[i].height) {
+                    context.rect(shapes[i].x + shapes[i].length / 2 - width / 2, shapes[i].y, width, shapes[i].height);
+                } else {
+                    context.rect(shapes[i].x, shapes[i].y + shapes[i].height / 2 - width / 2, shapes[i].length, width);
+                }
+
+                context.fill();
+                context.stroke();
+                context.closePath();
+            }
+        }
+    }
+    function drawScreen() {
+        context.fillStyle = canvasColour;
+        content.style.background = canvasColour;
+        context.fillRect(0, 0, window.innerWidth, window.innerHeight);
+        context.setLineDash([0]);
+        if (shapes.length > 0) {
+            drawShapes();
+            tileColor.value = shapes[currentTile].color;
+        }
+        if (selecting) {
+            drag.display();
+        }
+    }
+    function toggleLabels() {
+        if (labelButton.checked) {
+            showingLabels = true;
+        } else {
+            showingLabels = false;
+        }
+        drawScreen();
+    }
+    function zoom(x) {
+        shapeSize += x;
+        if (shapeSize < 15) {
+            shapeSize = 15;
+        }
+        if (shapeSize > 45) {
+            shapeSize = 45;
+        }
+        fontSize = shapeSize * 0.85;
+        init();
+    }
+    function moveCopy(x, y) {
+        if (moving) {
+            moveTiles(x, y);
+            checkZeroPairs();
+        } else {
+            addTile(x, y);
+        }
+    }
+    setUp();
+</script>
+
+</html>
